@@ -11,21 +11,21 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class CarbCalculatorContainer {
+public class ContainerData {
 	private Long containerId;
 	
 	private String containerName;
 	private BigDecimal containerWeight;
 	
-	private Set<CarbCalculatorMeal>	meals = new HashSet<>();
+	private Set<MealData>	meals = new HashSet<>();
 	
-	public	CarbCalculatorContainer (Container container) {
+	public	ContainerData (Container container) {
 	      this.containerId = container.getContainerId();
 	      this.containerName = container.getContainerName();
 	      this.containerWeight = container.getContainerWeight();
 	      
 	for (Meal meal : container.getMeals()) {
-		this.meals.add(new CarbCalculatorMeal(meal));
+		this.meals.add(new MealData(meal));
 	}
 	}
 }

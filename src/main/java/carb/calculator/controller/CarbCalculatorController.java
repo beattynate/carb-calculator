@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import carb.calculator.controller.model.CarbCalculatorContainer;
-import carb.calculator.controller.model.CarbCalculatorIngredient;
-import carb.calculator.controller.model.CarbCalculatorMeal;
-import carb.calculator.controller.model.CarbCalculatorMealRecord;
+import carb.calculator.controller.model.ContainerData;
+import carb.calculator.controller.model.IngredientData;
+import carb.calculator.controller.model.MealData;
+import carb.calculator.controller.model.MealRecordData;
 import carb.calculator.service.CarbCalculatorService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,42 +29,42 @@ public class CarbCalculatorController {
 	private CarbCalculatorService carbCalculatorService;
 	
 	@PostMapping("/meal_record")
-	public CarbCalculatorMealRecord insertMealRecord(
-			@RequestBody CarbCalculatorMealRecord carbCalculatorMealRecord) {
-		log.info("Creating meal record {}", carbCalculatorMealRecord);
-		return carbCalculatorService.saveMealRecord(carbCalculatorMealRecord);
+	public MealRecordData insertMealRecord(
+			@RequestBody MealRecordData mealRecordData) {
+		log.info("Creating meal record {}", mealRecordData);
+		return carbCalculatorService.saveMealRecord(mealRecordData);
 }
 	@PutMapping("/meal_record/{mealRecordId}")
-	public CarbCalculatorMealRecord modifyMealRecord(@PathVariable Long mealRecordId,
-			@RequestBody CarbCalculatorMealRecord carbCalculatorMealRecord) {
-		carbCalculatorMealRecord.setMealRecordId(mealRecordId);
+	public MealRecordData modifyMealRecord(@PathVariable Long mealRecordId,
+			@RequestBody MealRecordData mealRecordData) {
+		mealRecordData.setMealRecordId(mealRecordId);
 		log.info("Updating meal record {}", mealRecordId);
-		return carbCalculatorService.saveMealRecord(carbCalculatorMealRecord);
+		return carbCalculatorService.saveMealRecord(mealRecordData);
 		}
 	@PostMapping("/ingredient")
-	public CarbCalculatorIngredient insertIngredient(
-			@RequestBody CarbCalculatorIngredient carbCalculatorIngredient) {
-		log.info("Creating ingredient {}", carbCalculatorIngredient);
-		return carbCalculatorService.saveIngredient(carbCalculatorIngredient);
+	public IngredientData insertIngredient(
+			@RequestBody IngredientData ingredientData) {
+		log.info("Creating ingredient {}", ingredientData);
+		return carbCalculatorService.saveIngredient(ingredientData);
 	}
 	@PostMapping("/container")
-	public CarbCalculatorContainer insertContainer(
-			@RequestBody CarbCalculatorContainer carbCalculatorContainer) {
-		log.info("Creating container {}", carbCalculatorContainer);
-		return carbCalculatorService.saveContainer(carbCalculatorContainer);
+	public ContainerData insertContainer(
+			@RequestBody ContainerData containerData) {
+		log.info("Creating container {}", containerData);
+		return carbCalculatorService.saveContainer(containerData);
 	}
 	@PostMapping("/meal")
-	public CarbCalculatorMeal insertMeal(
-			@RequestBody CarbCalculatorMeal carbCalculatorMeal) {
-		log.info("Creating meal {}", carbCalculatorMeal);
-		return carbCalculatorService.saveMeal(carbCalculatorMeal);
+	public MealData insertMeal(
+			@RequestBody MealData mealData) {
+		log.info("Creating meal {}", mealData);
+		return carbCalculatorService.saveMeal(mealData);
 	}
 	@GetMapping("/meal_records")
-	public List<CarbCalculatorMealRecord> retrieveMealRecords(){
+	public List<MealRecordData> retrieveMealRecords(){
 		return carbCalculatorService.retrieveAllMealRecords();
 	}
 	@GetMapping("/meal_record/{mealRecordId}")
-	public CarbCalculatorMealRecord retrieveMealRecordById(@PathVariable Long mealRecordId) {
+	public MealRecordData retrieveMealRecordById(@PathVariable Long mealRecordId) {
 		return carbCalculatorService.retrieveMealRecord(mealRecordId);
 	}
 	@DeleteMapping("/meal_record/{mealRecordId}")
@@ -77,8 +77,8 @@ public class CarbCalculatorController {
 		return Map.of("message", "Deletion of meal record with ID=" + mealRecordId + " was succesful.");
 	}
 	@PostMapping("/meal/{mealId}/ingredient")
-	public CarbCalculatorMeal addIngredientToMeal(@PathVariable Long mealId,
-			@RequestBody CarbCalculatorMeal.IngredientPortion ingredientPortion) {
+	public MealData addIngredientToMeal(@PathVariable Long mealId,
+			@RequestBody MealData.IngredientPortion ingredientPortion) {
 		Long ingredientId = ingredientPortion.getIngredientId();
 		BigDecimal ingredientGrams = ingredientPortion.getIngredientGrams();
 		

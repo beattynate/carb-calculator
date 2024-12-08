@@ -11,21 +11,21 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class CarbCalculatorIngredient {
+public class IngredientData {
 	private Long ingredientId;
 	
 	private String ingredientName;
 	private BigDecimal carbsPer100;
 	
-		private Set<CarbCalculatorMealRecord> mealRecords = new HashSet<>();
+		private Set<MealRecordData> mealRecords = new HashSet<>();
 	
-	public CarbCalculatorIngredient (Ingredient ingredient) {
+	public IngredientData (Ingredient ingredient) {
 		this.ingredientId = ingredient.getIngredientId();
 		this.ingredientName = ingredient.getIngredientName();
 		this.carbsPer100 = ingredient.getCarbsPer100();
 		
 	  for(MealRecord mealRecord : ingredient.getMealRecords()) {
-		  this.mealRecords.add(new CarbCalculatorMealRecord(mealRecord));
+		  this.mealRecords.add(new MealRecordData(mealRecord));
 		   }
 	  
 	}

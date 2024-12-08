@@ -12,10 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import carb.calculator.controller.model.CarbCalculatorContainer;
-import carb.calculator.controller.model.CarbCalculatorIngredient;
-import carb.calculator.controller.model.CarbCalculatorMeal;
-import carb.calculator.controller.model.CarbCalculatorMealRecord;
+import carb.calculator.controller.model.IngredientData;
+import carb.calculator.controller.model.MealData;
+import carb.calculator.controller.model.MealRecordData;
+import carb.calculator.controller.model.ContainerData;
 import carb.calculator.dao.ContainerDao;
 import carb.calculator.dao.IngredientDao;
 import carb.calculator.dao.MealDao;
@@ -44,23 +44,24 @@ public class CarbCalculatorService {
 	@Autowired
 	private MealIngredientDao mealIngredientDao;
 
-	public CarbCalculatorMealRecord saveMealRecord(CarbCalculatorMealRecord carbCalculatorMealRecord) {
-		Long mealRecordId = carbCalculatorMealRecord.getMealRecordId();
+	@Transactional(readOnly = false)
+	public MealRecordData saveMealRecord(MealRecordData mealRecordData) {
+		Long mealRecordId = mealRecordData.getMealRecordId();
 		MealRecord mealRecord = findOrCreateMealRecord(mealRecordId);
 		
 		mealRecord.setTimestamp(LocalDateTime.now());
 		
-		copyMealRecordFields(mealRecord, carbCalculatorMealRecord);
-		return new CarbCalculatorMealRecord(mealRecordDao.save(mealRecord));
+		copyMealRecordFields(mealRecord, mealRecordData);
+		return new MealRecordData(mealRecordDao.save(mealRecord));
 		
 	}
 
-	private void copyMealRecordFields(MealRecord mealRecord, CarbCalculatorMealRecord carbCalculatorMealRecord) {
-		mealRecord.setPortionWeight(carbCalculatorMealRecord.getPortionWeight());
-		mealRecord.setPortionCarbs(carbCalculatorMealRecord.getPortionCarbs());
-		mealRecord.setMealTotalWeight(carbCalculatorMealRecord.getMealTotalWeight());
-		mealRecord.setMealTotalCarbs(carbCalculatorMealRecord.getMealTotalCarbs());
-		mealRecord.setTimestamp(carbCalculatorMealRecord.getTimestamp());
+	private void copyMealRecordFields(MealRecord mealRecord, MealRecordData mealRecordData) {
+		mealRecord.setPortionWeight(mealRecordData.getPortionWeight());
+		mealRecord.setPortionCarbs(mealRecordData.getPortionCarbs());
+		mealRecord.setMealTotalWeight(mealRecordData.getMealTotalWeight());
+		mealRecord.setMealTotalCarbs(mealRecordData.getMealTotalCarbs());
+		mealRecord.setTimestamp(mealRecordData.getTimestamp());
 		
 	}
 
@@ -78,18 +79,23 @@ public class CarbCalculatorService {
 						"Meal record with ID=" + mealRecordId + " was not found."));
 	}
 
-	public CarbCalculatorIngredient saveIngredient(CarbCalculatorIngredient carbCalculatorIngredient) {
-		Long ingredientId = carbCalculatorIngredient.getIngredientId();
+	@Transactional(readOnly = false)
+	public IngredientData saveIngredient(IngredientData ingredientData) {
+		Long ingredientId = ingredientData.getIngredientId();
 		Ingredient ingredient = findOrCreateIngredient(ingredientId);
 		
-		copyIngredientFields(ingredient, carbCalculatorIngredient);
-		return new CarbCalculatorIngredient(ingredientDao.save(ingredient));
+		if (Objects.isNull(ingredientData.getCarbsPer100()) || ingredientData.getCarbsPer100().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Carbs per 100 grams must be greater than 0.");
+        }
+		
+		copyIngredientFields(ingredient, ingredientData);
+		return new IngredientData(ingredientDao.save(ingredient));
 		
 	}
 
-	private void copyIngredientFields(Ingredient ingredient, CarbCalculatorIngredient carbCalculatorIngredient) {
-		ingredient.setIngredientName(carbCalculatorIngredient.getIngredientName());
-		ingredient.setCarbsPer100(carbCalculatorIngredient.getCarbsPer100());
+	private void copyIngredientFields(Ingredient ingredient, IngredientData ingredientData) {
+		ingredient.setIngredientName(ingredientData.getIngredientName());
+		ingredient.setCarbsPer100(ingredientData.getCarbsPer100());
 		
 	}
 
@@ -107,17 +113,18 @@ public class CarbCalculatorService {
 						"Ingredient with ID=" + ingredientId + " was not found."));
 	}
 
-	public CarbCalculatorContainer saveContainer(CarbCalculatorContainer carbCalculatorContainer) {
-		Long containerId = carbCalculatorContainer.getContainerId();
+	@Transactional(readOnly = false)
+	public ContainerData saveContainer(ContainerData containerData) {
+		Long containerId = containerData.getContainerId();
 		Container container = findOrCreateContainer(containerId);
 
-		copyContainerFields(container, carbCalculatorContainer);
-		return new CarbCalculatorContainer(containerDao.save(container));
+		copyContainerFields(container, containerData);
+		return new ContainerData(containerDao.save(container));
 	}
 
-	private void copyContainerFields(Container container, CarbCalculatorContainer carbCalculatorContainer) {
-		container.setContainerName(carbCalculatorContainer.getContainerName());
-		container.setContainerWeight(carbCalculatorContainer.getContainerWeight());
+	private void copyContainerFields(Container container, ContainerData containerData) {
+		container.setContainerName(containerData.getContainerName());
+		container.setContainerWeight(containerData.getContainerWeight());
 				
 	}
 
@@ -135,34 +142,43 @@ public class CarbCalculatorService {
 						"Container with ID=" + containerId + " was not found."));
 	}
 
-	public CarbCalculatorMeal saveMeal(CarbCalculatorMeal carbCalculatorMeal) {
-		//TODO create validations for null and zero values
-		Long mealId = carbCalculatorMeal.getMealId();
-		Meal meal = findOrCreateMeal(mealId);
-		Container container = findContainerById(carbCalculatorMeal.getContainerId());
+	@Transactional(readOnly = false)
+	public MealData saveMeal(MealData mealData) {
 		
-		BigDecimal carbs = carbCalculatorMeal.getTotalCarbGrams();
-		BigDecimal mealWeight = carbCalculatorMeal.getTotalWeight();
+		Long mealId = mealData.getMealId();
+		Meal meal = findOrCreateMeal(mealId);
+		Container container = findContainerById(mealData.getContainerId());
+		BigDecimal carbs = mealData.getTotalCarbGrams();
+		BigDecimal mealWeight = mealData.getTotalWeight();
+		
+		 if (mealWeight == null || mealWeight.compareTo(BigDecimal.ZERO) <= 0) {
+		        throw new IllegalArgumentException("Meal weight must be greater than zero.");
+		    }
 		BigDecimal containerWeight = container.getContainerWeight();
 		BigDecimal netWeight = mealWeight.subtract(containerWeight);
+		
+		if (netWeight.compareTo(BigDecimal.ZERO) <= 0) {
+	        throw new IllegalArgumentException("Net weight must be greater than zero.");
+	    }
+		
 		BigDecimal carbsPer100 = carbs.multiply(BigDecimal.valueOf(100))
 						.divide(netWeight, RoundingMode.HALF_UP);
 				
-		carbCalculatorMeal.setCarbsPer100(carbsPer100);
+		mealData.setCarbsPer100(carbsPer100);
 		
 		
 		
-		copyMealFields(meal, carbCalculatorMeal);
-		return new CarbCalculatorMeal(mealDao.save(meal));
+		copyMealFields(meal, mealData);
+		return new MealData(mealDao.save(meal));
 	}
 
-	private void copyMealFields(Meal meal, CarbCalculatorMeal carbCalculatorMeal) {
-		Long containerId = carbCalculatorMeal.getContainerId();
+	private void copyMealFields(Meal meal, MealData mealData) {
+		Long containerId = mealData.getContainerId();
 		
-		meal.setMealName(carbCalculatorMeal.getMealName());
-		meal.setTotalWeight(carbCalculatorMeal.getTotalWeight());
-		meal.setTotalCarbGrams(carbCalculatorMeal.getTotalCarbGrams());
-		meal.setCarbsPer100(carbCalculatorMeal.getCarbsPer100());
+		meal.setMealName(mealData.getMealName());
+		meal.setTotalWeight(mealData.getTotalWeight());
+		meal.setTotalCarbGrams(mealData.getTotalCarbGrams());
+		meal.setCarbsPer100(mealData.getCarbsPer100());
 		meal.setContainer(findContainerById(containerId));
 		
 		
@@ -184,24 +200,24 @@ public class CarbCalculatorService {
 	}
 
 	@Transactional (readOnly = true)
-	public List<CarbCalculatorMealRecord> retrieveAllMealRecords() {
+	public List<MealRecordData> retrieveAllMealRecords() {
 		
 		List<MealRecord> mealRecords = new LinkedList<>(mealRecordDao.findAll());
-		List<CarbCalculatorMealRecord> result = new LinkedList<>();
+		List<MealRecordData> result = new LinkedList<>();
 		
 		for(MealRecord mealRecord : mealRecords) {
-			CarbCalculatorMealRecord ccmr = new CarbCalculatorMealRecord();
+			MealRecordData mrd = new MealRecordData(mealRecord);
 			
-			result.add(ccmr);
+			result.add(mrd);
 		}
 		return result;
 	}
 	
 	@Transactional (readOnly = true)
-	public CarbCalculatorMealRecord retrieveMealRecord(Long mealRecordId) {
+	public MealRecordData retrieveMealRecord(Long mealRecordId) {
 		MealRecord mealRecord = findMealRecordById(mealRecordId);
-		CarbCalculatorMealRecord ccmr = new CarbCalculatorMealRecord(mealRecord);
-		return ccmr;
+		MealRecordData mrd = new MealRecordData(mealRecord);
+		return mrd;
 	}
     
 	@Transactional (readOnly = false)
@@ -210,13 +226,18 @@ public class CarbCalculatorService {
 		mealRecordDao.delete(mealRecord);
 		
 	}
-	//TODO validations
+	
 	@Transactional (readOnly = false)
-	public CarbCalculatorMeal addIngredientToMeal(Long ingredientId, Long mealId, BigDecimal ingredientGrams) {
+	public MealData addIngredientToMeal(Long ingredientId, Long mealId, BigDecimal ingredientGrams) {
 		Meal meal = findMealById(mealId);
 		Ingredient ingredient = findIngredientById(ingredientId);
 		MealIngredient mealIngredient = new MealIngredient();
 		BigDecimal ingredientCarbsPer100 = ingredient.getCarbsPer100();
+		
+		if (Objects.isNull(ingredientGrams) || ingredientGrams.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Ingredient grams must be greater than 0");
+		}
+		
 		BigDecimal portionCarbs = ingredientCarbsPer100.divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP).
 				multiply(ingredientGrams);
 		BigDecimal mealCarbs = meal.getTotalCarbGrams();
@@ -230,7 +251,7 @@ public class CarbCalculatorService {
 		mealIngredient.setIngredientGrams(ingredientGrams);
 		mealIngredientDao.save(mealIngredient);
 				
-		return saveMeal(new CarbCalculatorMeal(meal));
+		return saveMeal(new MealData(meal));
 	}
 	
 	

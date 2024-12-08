@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class CarbCalculatorMeal {
+public class MealData {
 	private Long mealId;
 	private Long containerId;
 	
@@ -25,7 +25,7 @@ public class CarbCalculatorMeal {
 	 
 	
 	private Set<IngredientPortion> ingredients = new HashSet<>();
-	private Set<CarbCalculatorMealRecord> mealRecords = new HashSet<>();
+	private Set<MealRecordData> mealRecords = new HashSet<>();
 		
 		@Data
 		@NoArgsConstructor
@@ -48,7 +48,7 @@ public class CarbCalculatorMeal {
 		  }
 		
 	
-	public CarbCalculatorMeal(Meal meal) {
+	public MealData(Meal meal) {
 		this.mealId = meal.getMealId();
 		this.mealName = meal.getMealName();
 		this.totalWeight = meal.getTotalWeight();
@@ -59,7 +59,7 @@ public class CarbCalculatorMeal {
 		addIngredientsToMeal(meal);
 		
 	  for(MealRecord mealRecord : meal.getMealRecords()) {
-		  this.mealRecords.add(new CarbCalculatorMealRecord(mealRecord));
+		  this.mealRecords.add(new MealRecordData(mealRecord));
 	  }
 		
 	
